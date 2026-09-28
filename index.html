@@ -608,14 +608,6 @@
           <input type="text" id="res" placeholder="e.g. F3 or C-Block">
         </div>
         <div class="field">
-          <label for="deliverySlot">Delivery time (today)</label>
-          <select id="deliverySlot">
-            <option value="Morning (8am–11am)">Morning (8am–11am)</option>
-            <option value="Afternoon (12pm–3pm)">Afternoon (12pm–3pm)</option>
-            <option value="Evening (4pm–7pm)">Evening (4pm–7pm)</option>
-          </select>
-        </div>
-        <div class="field">
           <label for="contact">WhatsApp / cell number</label>
           <input type="text" id="contact" placeholder="e.g. 08X XXX XXXX">
         </div>
@@ -790,7 +782,6 @@
     const name = document.getElementById('customerName').value.trim();
     const res = document.getElementById('res').value.trim();
     const contact = document.getElementById('contact').value.trim();
-    const deliverySlot = document.getElementById('deliverySlot').value;
     const items = Object.entries(cart).map(([id, qty]) => ({
       flavor: flavors.find(f => f.id === id),
       qty
@@ -824,7 +815,6 @@
       quantity: qty,
       total: flavor.price * qty,
       delivery_point: res,
-      delivery_slot: deliverySlot,
       contact: contact,
       order_group: orderGroup
     }));
@@ -853,7 +843,6 @@
       `${summary}\n` +
       `Total: R${grandTotal}\n` +
       `Delivery point: ${res}\n` +
-      `Delivery time: ${deliverySlot}\n` +
       `Contact: ${contact}`;
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
