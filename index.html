@@ -608,6 +608,14 @@
           <input type="text" id="res" placeholder="e.g. F3 or C-Block">
         </div>
         <div class="field">
+          <label for="deliverySlot">Delivery time (today)</label>
+          <select id="deliverySlot">
+            <option value="Morning (8am–11am)">Morning (8am–11am)</option>
+            <option value="Afternoon (12pm–3pm)">Afternoon (12pm–3pm)</option>
+            <option value="Evening (4pm–7pm)">Evening (4pm–7pm)</option>
+          </select>
+        </div>
+        <div class="field">
           <label for="contact">WhatsApp / cell number</label>
           <input type="text" id="contact" placeholder="e.g. 08X XXX XXXX">
         </div>
@@ -782,6 +790,7 @@
     const name = document.getElementById('customerName').value.trim();
     const res = document.getElementById('res').value.trim();
     const contact = document.getElementById('contact').value.trim();
+    const deliverySlot = document.getElementById('deliverySlot').value;
     const items = Object.entries(cart).map(([id, qty]) => ({
       flavor: flavors.find(f => f.id === id),
       qty
@@ -800,6 +809,12 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Placing order...';
 
+    // Open the WhatsApp tab immediately, tied directly to this tap —
+    // mobile browsers block window.open() if it happens after any delay
+    // (like waiting for the database save below). We fill in the real
+    // URL once the order is saved, then redirect this already-open tab.
+    const whatsappWindow = window.open('', '_blank');
+
     // Each flavour becomes its own row, tagged with a shared order_group
     const orderGroup = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
     const rows = items.map(({ flavor, qty }) => ({
@@ -809,6 +824,7 @@
       quantity: qty,
       total: flavor.price * qty,
       delivery_point: res,
+      delivery_slot: deliverySlot,
       contact: contact,
       order_group: orderGroup
     }));
@@ -821,6 +837,7 @@
 
     if (error) {
       console.error(error);
+      if (whatsappWindow) whatsappWindow.close();
       alert('Something went wrong saving your order — please try again or message us directly.');
       return;
     }
@@ -836,11 +853,19 @@
       `${summary}\n` +
       `Total: R${grandTotal}\n` +
       `Delivery point: ${res}\n` +
+      `Delivery time: ${deliverySlot}\n` +
       `Contact: ${contact}`;
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
+    if (whatsappWindow) {
+      whatsappWindow.location.href = whatsappUrl;
+    } else {
+      // Pop-up was blocked even with our workaround — fall back to
+      // navigating the current tab instead of losing the order.
+      window.location.href = whatsappUrl;
+    }
+
     alert(`Thanks, ${name}! Your order's saved.\n\n${summary}\n\nTotal: R${grandTotal}\n\nWe'll open WhatsApp so you can send this order to us directly.`);
-    window.open(whatsappUrl, '_blank');
     e.target.reset();
     Object.keys(cart).forEach(k => delete cart[k]);
     renderCart();
